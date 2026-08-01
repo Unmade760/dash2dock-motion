@@ -4,5 +4,6 @@
   "uuid": "dash2dock-motion@unmade.space",
   "gettext-domain": "dash2dock-motion",
   "settings-schema": "org.gnome.shell.extensions.dash2dock-motion",
-  "shell-version": ["50"]
+  "shell-version": ["50"],
+  "url": "https://github.com/Unmade760/dash2dock-motion"
 }
