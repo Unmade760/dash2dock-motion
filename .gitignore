@@ -1,0 +1,5 @@
+# Built by `make compile-schemas`
+schemas/gschemas.compiled
+
+# Packaged extension
+*.zip

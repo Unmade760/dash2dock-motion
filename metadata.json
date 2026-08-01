@@ -1,0 +1,8 @@
+{
+  "name": "Dash2Dock Motion",
+  "description": "Dock with cosine-window icon magnification, a translucent glass slab and configurable rise.",
+  "uuid": "dash2dock-motion@unmade.space",
+  "gettext-domain": "dash2dock-motion",
+  "settings-schema": "org.gnome.shell.extensions.dash2dock-motion",
+  "shell-version": ["50"]
+}
