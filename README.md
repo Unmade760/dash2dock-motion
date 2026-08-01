@@ -137,5 +137,6 @@ Not affiliated with or endorsed by either project.
 ## License
 
 GPL-2.0-or-later, matching upstream, which is distributed under the terms of
-the GNU General Public License, version 2 or later. See
-[COPYING](COPYING).
+the GNU General Public License, version 2 or later. The full licence text is
+in [COPYING](COPYING), and the attribution required when redistributing is in
+[NOTICE](NOTICE).

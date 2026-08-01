@@ -1,26 +1,3 @@
-Dash2Dock Motion
-================
-
-This program is a modified copy of Dash to Dock v105
-(https://github.com/micheleg/dash-to-dock) by Michele Gaio (micheleg) and
-contributors, which supplies the dock core: docking, autohide, intellihide,
-struts, theming, app icons and preferences.
-
-The magnification engine (magnifier.js) and the glass slab (glass.js) are
-original to this program. Work on the launch bounce and per-frame icon
-transforms was informed by Dash2Dock Animated
-(https://github.com/icedman/dash2dock-lite) by icedman.
-
-Copyright (C) 2015-2024 Michele Gaio and Dash to Dock contributors
-Copyright (C) 2026 Dash2Dock Motion contributors
-
-This program is free software; you can redistribute it and/or modify it
-under the terms of the GNU General Public License as published by the Free
-Software Foundation; either version 2 of the License, or (at your option)
-any later version. The full text of that license follows.
-
---------------------------------------------------------------------------
-
                     GNU GENERAL PUBLIC LICENSE
                        Version 2, June 1991
 

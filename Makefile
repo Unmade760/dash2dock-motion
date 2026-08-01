@@ -30,7 +30,8 @@ SOURCES = \
 	metadata.json \
 	stylesheet.css \
 	Settings.ui \
-	COPYING
+	COPYING \
+	NOTICE
 
 DIRS = dependencies locale media schemas
 
