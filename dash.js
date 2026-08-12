@@ -780,6 +780,12 @@ export const DockDash = GObject.registerClass({
         const dockManager = Docking.DockManager.getDefault();
         const {settings} = dockManager;
 
+        // Only the running list is filtered. Favouriting an app is explicit
+        // enough to override the exclusion.
+        const excluded = settings.runningAppsExclusions;
+        if (excluded.length)
+            running = running.filter(app => !excluded.includes(app.get_id()));
+
         this._scrollView.set({
             xAlign: Clutter.ActorAlign.FILL,
             yAlign: Clutter.ActorAlign.FILL,

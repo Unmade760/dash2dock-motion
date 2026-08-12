@@ -20,6 +20,7 @@ import {
 
 const SCALE_UPDATE_TIMEOUT = 500;
 const DEFAULT_ICONS_SIZES = [128, 96, 64, 48, 32, 24, 16];
+const EXCLUSIONS_KEY = 'running-apps-exclusions';
 
 const TransparencyMode = Object.freeze({
     DEFAULT: 0,
@@ -333,10 +334,119 @@ const DockSettings = GObject.registerClass({
             __('Glass outline'),
             __('Draw a rim border around the dock slab.'));
 
+        this._addExclusions(page);
+
         const scroll = new Gtk.ScrolledWindow({child: page});
         this.widget.insert_page(scroll,
             new Gtk.Label({label: __('Dash2Dock Motion')}), 0);
         this.widget.set_current_page(0);
+    }
+
+    _exclusionRow(id, app) {
+        const row = new Gtk.Box({
+            orientation: Gtk.Orientation.HORIZONTAL,
+            spacing: 12,
+            margin_top: 6,
+            margin_bottom: 6,
+            margin_start: 12,
+            margin_end: 12,
+        });
+        row.append(new Gtk.Label({
+            label: app?.get_display_name() ?? id,
+            xalign: 0,
+            hexpand: true,
+        }));
+        row.append(new Gtk.Label({label: id, css_classes: ['dim-label']}));
+
+        const remove = new Gtk.Button({
+            icon_name: 'list-remove-symbolic',
+            valign: Gtk.Align.CENTER,
+            css_classes: ['flat'],
+            tooltip_text: __('Remove'),
+        });
+        remove.connect('clicked', () => {
+            this._settings.set_strv(EXCLUSIONS_KEY,
+                this._settings.get_strv(EXCLUSIONS_KEY).filter(x => x !== id));
+        });
+        row.append(remove);
+
+        return row;
+    }
+
+    // Apps kept out of the dash when they open. Launchers are the usual case:
+    // they hold a window for a moment and there is nothing to switch back to.
+    _addExclusions(page) {
+        page.append(new Gtk.Label({
+            label: `<b>${__('Never show when running')}</b>`,
+            use_markup: true,
+            xalign: 0,
+        }));
+        page.append(new Gtk.Label({
+            label: __('These applications stay out of the dock when they open. Adding one to your favourites still shows it.'),
+            xalign: 0,
+            wrap: true,
+            css_classes: ['dim-label'],
+        }));
+
+        const list = new Gtk.ListBox({
+            selection_mode: Gtk.SelectionMode.NONE,
+            css_classes: ['rich-list'],
+            show_separators: true,
+        });
+        page.append(new Gtk.Frame({child: list}));
+
+        const apps = Gio.AppInfo.get_all().filter(app => app.should_show())
+            .sort((a, b) => a.get_display_name().localeCompare(b.get_display_name()));
+
+        const rebuild = () => {
+            let row;
+            while ((row = list.get_row_at_index(0)))
+                list.remove(row);
+
+            const ids = this._settings.get_strv(EXCLUSIONS_KEY);
+            if (!ids.length) {
+                list.append(new Gtk.Label({
+                    label: __('Nothing excluded'),
+                    margin_top: 12,
+                    margin_bottom: 12,
+                    css_classes: ['dim-label'],
+                }));
+                return;
+            }
+
+            ids.forEach(id => list.append(
+                this._exclusionRow(id, apps.find(a => a.get_id() === id))));
+        };
+
+        const model = new Gtk.StringList();
+        apps.forEach(app => model.append(app.get_display_name()));
+        const chooser = new Gtk.DropDown({
+            model,
+            hexpand: true,
+            enable_search: true,
+            expression: Gtk.PropertyExpression.new(Gtk.StringObject, null, 'string'),
+        });
+
+        const add = new Gtk.Button({label: __('Add')});
+        add.connect('clicked', () => {
+            const app = apps[chooser.selected];
+            if (!app)
+                return;
+            const ids = this._settings.get_strv(EXCLUSIONS_KEY);
+            if (!ids.includes(app.get_id()))
+                this._settings.set_strv(EXCLUSIONS_KEY, [...ids, app.get_id()]);
+        });
+
+        const adder = new Gtk.Box({
+            orientation: Gtk.Orientation.HORIZONTAL,
+            spacing: 12,
+        });
+        adder.append(chooser);
+        adder.append(add);
+        page.append(adder);
+
+        this._settings.connect(`changed::${EXCLUSIONS_KEY}`, rebuild);
+        rebuild();
     }
 
     vfunc_create_closure(builder, handlerName, flags, connectObject) {

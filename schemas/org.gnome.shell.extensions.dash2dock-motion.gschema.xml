@@ -221,6 +221,11 @@
       <summary>Show running apps</summary>
       <description>Show or hide running applications icons in the dash</description>
     </key>
+    <key type="as" name="running-apps-exclusions">
+      <default>['vicinae.desktop']</default>
+      <summary>Apps that never appear just because they are running</summary>
+      <description>Desktop file ids of applications to keep out of the dash when they open. Favourites are unaffected. Meant for launchers and other windows that are not worth a dock icon.</description>
+    </key>
     <key type="b" name="isolate-workspaces">
       <default>false</default>
       <summary>Provide workspace isolation</summary>

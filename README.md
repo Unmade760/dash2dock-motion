@@ -16,6 +16,8 @@ cursor and reflows their neighbours around them.
   and scaled down, so they stay sharp at any magnification.
 - A configurable gap between the dock and the screen edge, which can also be
   negative to push the dock past the edge.
+- A list of applications that never appear in the dock just because they are
+  running, for launchers and other windows you would not switch back to.
 - A translucent slab with an optional rim border. The backdrop blur is left to
   [Blur my Shell](https://github.com/aunetx/blur-my-shell) rather than
   reimplemented here.
@@ -45,8 +47,8 @@ GNOME Shell 50 has no extension hot-reload, so log out and back in, then:
 gnome-extensions enable dash2dock-motion@unmade.space
 ```
 
-`make zip` builds a package suitable for uploading, and `make uninstall`
-removes the installed copy.
+`make zip` builds a package suitable for uploading, `make uninstall` removes the
+installed copy, and `make lint` runs ESLint over the sources.
 
 Run only one dock at a time. Disable Dash to Dock, any other dock extension and
 the built-in `dock@gnome-shell-extensions.gcampax.github.com` before enabling
@@ -69,6 +71,7 @@ Dash to Dock's own.
 | `edge-distance` | -16 to 8 px | -5 | Gap from the screen edge. Negative pushes the dock past it |
 | `glass-outline` | boolean | true | Rim border around the slab |
 | `show-icon-highlight` | boolean | false | Translucent box behind hovered and focused icons |
+| `running-apps-exclusions` | list of app ids | `['vicinae.desktop']` | Apps kept out of the dock when they open. Favourites are unaffected |
 
 ## How the magnification works
 
@@ -82,11 +85,20 @@ magnification and the results are accumulated, anchored so that the point under
 the cursor stays under the cursor. Neighbouring icons flow outwards as a
 consequence rather than being positioned individually.
 
-Lateral response is instantaneous, because scale is a direct function of
-pointer position on every frame. The only animated quantity is a scalar
-envelope, integrated as a critically damped spring when the pointer enters or
-leaves the dock. Nothing is re-laid-out per frame: only `pivot_point`,
-`set_scale` and `translation_x/y` are touched.
+Scale is a direct function of pointer position, recomputed every frame. Two
+quantities are integrated over time instead of being read straight off the
+pointer. One is a scalar envelope, a critically damped spring that scales the
+whole effect as the pointer enters and leaves the dock. The other is the cursor
+itself: the pointer is sampled once a frame, and the beat between a mouse's
+report rate and the frame clock is enough to make the anchor twitch, so the
+sampled position goes through a 45 ms low pass first. It settles exactly on the
+pointer when you stop moving.
+
+Nothing is re-laid-out per frame: only `pivot_point`, `set_scale` and
+`translation_x/y` are touched. The one exception is that the dash re-runs the
+magnifier after its own allocation, because Clutter advances timelines before
+it relayouts, and an icon animating in resizes the strip on every frame of that
+animation.
 
 ## Bug reporting
 
@@ -113,7 +125,8 @@ are:
   an `updateIconGeometry()` that derives the minimize target from the
   allocation chain so per-frame transforms cannot displace it.
 - `appIconIndicators.js`: oversampled running dots and notification badge.
-- `dash.js`: `refreshIconResolution()`.
+- `dash.js`: `refreshIconResolution()`, the `items-allocated` signal the
+  magnifier hangs off, and the running-app exclusion filter.
 - `docking.js`: magnifier and glass wiring, the edge distance setting, and a
   padded slide-container clip so magnified icons are not cut off.
 - `prefs.js`: the Dash2Dock Motion preferences page.
