@@ -3,3 +3,4 @@ schemas/gschemas.compiled
 
 # Packaged extension
 *.zip
+node_modules/

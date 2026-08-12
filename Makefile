@@ -35,12 +35,17 @@ SOURCES = \
 
 DIRS = dependencies locale media schemas
 
-.PHONY: all compile-schemas install uninstall zip clean
+.PHONY: all compile-schemas lint install uninstall zip clean
 
 all: compile-schemas
 
 compile-schemas:
 	glib-compile-schemas --strict schemas/
+
+# One warning in locations.js is expected: a redundant eslint-disable that is
+# upstream's, left in place to keep that file close to their copy.
+lint:
+	npx eslint *.js
 
 install: compile-schemas
 	rm -rf $(INSTALL_DIR)
