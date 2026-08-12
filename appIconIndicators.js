@@ -56,8 +56,10 @@ export class AppIconIndicator {
         else
             ({runningIndicatorStyle} = settings);
 
-        if (settings.showIconsEmblems &&
-            !Docking.DockManager.getDefault().notificationsMonitor.dndMode) {
+        const {notificationsMonitor, remoteModel} = Docking.DockManager.getDefault();
+        // Without a remote model there is nothing for UnityIndicator to look up,
+        // and throwing here would leave the icon with no indicator at all.
+        if (settings.showIconsEmblems && !notificationsMonitor.dndMode && remoteModel) {
             const unityIndicator = new UnityIndicator(source);
             this._indicators.push(unityIndicator);
         }
@@ -118,10 +120,11 @@ export class AppIconIndicator {
     }
 
     destroy() {
-        for (let i = 0; i < this._indicators.length; i++) {
-            const indicator = this._indicators[i];
-            indicator.destroy();
-        }
+        // Cleared first so that a second call is a no-op.
+        const indicators = this._indicators;
+        this._indicators = [];
+        for (let i = 0; i < indicators.length; i++)
+            indicators[i].destroy();
     }
 }
 
@@ -465,6 +468,7 @@ class RunningIndicatorDots extends RunningIndicatorBase {
 
     destroy() {
         this._area.destroy();
+        this._area = null;
         super.destroy();
     }
 }

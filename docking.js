@@ -1828,6 +1828,11 @@ export class DockManager {
 
         this._signalsHandler.add(this._notificationsMonitor, 'changed',
             () => ensureRemoteModel());
+        // App icons rebuild their indicators on state-changed and the Unity one
+        // needs the model, so put it back before they do. Connecting here means
+        // this runs first, no icon exists yet.
+        this._signalsHandler.add(this._notificationsMonitor, 'state-changed',
+            () => ensureRemoteModel());
         this._signalsHandler.add(this._settings, 'changed::show-icons-emblems',
             () => ensureRemoteModel());
 
