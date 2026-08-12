@@ -1,8 +1,8 @@
+#!/usr/bin/env gjs
 // This file is part of Dash2Dock Motion, a modified copy of Dash to Dock
 // (https://github.com/micheleg/dash-to-dock) by Michele Gaio and
 // contributors. Distributed under the GNU General Public License,
 // version 2 or later.
-#!/usr/bin/env gjs
 
 import GLib from 'gi://GLib';
 import Gio from 'gi://Gio';
