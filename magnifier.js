@@ -3,15 +3,17 @@
 // Icon magnification driven by the pointer position.
 //
 // Icon scale is a direct function of the pointer position through a
-// raised-cosine (Hann) window, recomputed every frame, so lateral motion is
-// not smoothed over time. Positions come from a cumulative layout walk: each
-// slot is widened by its own magnification and the results are accumulated,
-// anchored so the point under the cursor stays under the cursor. Icons are
-// pinned to the dock's screen edge and grow outwards past the background.
+// raised-cosine (Hann) window, recomputed every frame. Positions come from a
+// cumulative layout walk: each slot is widened by its own magnification and
+// the results are accumulated, anchored so the point under the cursor stays
+// under the cursor. Icons are pinned to the dock's screen edge and grow
+// outwards past the background.
 //
-// The only animated quantity is a scalar envelope in the range 0 to 1,
-// integrated as a critically damped spring when the pointer enters or leaves
-// the dock. It multiplies the whole effect.
+// Two quantities are integrated over time instead of being read straight off
+// the pointer. One is a scalar envelope in the range 0 to 1, a critically
+// damped spring that multiplies the whole effect as the pointer enters and
+// leaves the dock. The other is the cursor itself, low passed to keep input
+// sampling noise out of the layout.
 
 import Clutter from 'gi://Clutter';
 import Graphene from 'gi://Graphene';
@@ -33,6 +35,11 @@ const SPRING_OMEGA = 20.0;      // rad/s, critically damped enter/leave envelope
 const MAX_FRAME_DT = 1 / 30;    // clamp spring integration steps
 const SETTLE_ENVELOPE = 0.002;
 const SETTLE_VELOCITY = 0.02;
+// Low pass on the sampled pointer, seconds. Reading the pointer once a frame
+// picks up the beat between the mouse's report rate and the frame clock, and
+// the anchor turns that into the whole strip twitching. Steady state lag is
+// speed times this, so about 11px at a normal sweep.
+const CURSOR_TAU = 0.045;
 
 const PIVOTS = {
     [St.Side.BOTTOM]: [0.5, 1],
@@ -70,6 +77,7 @@ export class DockMagnifier {
         this._signalIds = [];     // [object, id] pairs
         this._transformed = new Map();  // actor -> destroy-signal id
         this._risen = new Map();        // container -> destroy-signal id
+        this._cursor = null;            // smoothed pointer, dock axis
         this._debugPointer = null;      // [stageX, stageY] override for tests
 
         this._readSettings();
@@ -199,6 +207,8 @@ export class DockMagnifier {
     _startTimeline() {
         if (this._timeline)
             return;
+        // Pick the pointer up where it is now, not where the last run left it.
+        this._cursor = null;
         this._timeline = Clutter.Timeline.new_for_actor(this._dash, 3600 * 1000);
         this._timeline.set_repeat_count(-1);
         this._timeline.connect('new-frame', () => this._onFrame());
@@ -212,6 +222,19 @@ export class DockMagnifier {
         this._timeline = null;
     }
 
+    _pointerAxis() {
+        const pointer = this._debugPointer ?? global.get_pointer();
+        return this._horizontal ? pointer[0] : pointer[1];
+    }
+
+    _advanceCursor(dt) {
+        const raw = this._pointerAxis();
+        if (this._cursor === null)
+            this._cursor = raw;
+        else
+            this._cursor += (raw - this._cursor) * (1 - Math.exp(-dt / CURSOR_TAU));
+    }
+
     _onFrame() {
         if (!this._dash.get_stage()) {
             this._stopTimeline();
@@ -219,6 +242,8 @@ export class DockMagnifier {
         }
 
         const dt = Math.min(this._timeline.get_delta() / 1000, MAX_FRAME_DT);
+
+        this._advanceCursor(dt);
 
         // Critically damped spring toward the target envelope.
         const w = SPRING_OMEGA;
@@ -250,12 +275,9 @@ export class DockMagnifier {
         if (!this._dash._box.has_allocation())
             return;
 
-        let pointer;
-        if (this._debugPointer)
-            pointer = this._debugPointer;
-        else
-            pointer = global.get_pointer();
-        const cursor = this._horizontal ? pointer[0] : pointer[1];
+        // The frame loop owns the smoothed cursor. Calls from outside it, after
+        // a relayout or a settings change, reuse the last frame's value.
+        const cursor = this._cursor ?? this._pointerAxis();
 
         const elements = this._collectElements();
         if (elements.length === 0)
@@ -285,9 +307,10 @@ export class DockMagnifier {
 
         const newBounds = new Array(n + 1);
         newBounds[0] = bounds[0];
-        for (let i = 0; i < n; i++)
+        for (let i = 0; i < n; i++) {
             newBounds[i + 1] = newBounds[i] +
                 (bounds[i + 1] - bounds[i]) * elements[i].scale;
+        }
 
         // Anchor: the base-space point under the cursor maps to itself, so
         // the icon under the pointer never slides out from beneath it.
@@ -315,9 +338,10 @@ export class DockMagnifier {
             const newCenter = newBounds[i] +
                 (el.center - bounds[i]) * el.scale + shift;
             this._apply(el.actor, el.scale, newCenter - el.center);
-            if (riseNorm > 0)
+            if (riseNorm > 0) {
                 this._applyRise(el.container,
                     riseNorm * el.thickness * (el.scale - 1));
+            }
             el.container.updateLabelPosition?.();
         }
         if (riseNorm === 0 && this._risen.size > 0)
@@ -551,6 +575,7 @@ export class DockMagnifier {
 
     setDebugState(stageX, stageY, envelope) {
         this._debugPointer = [stageX, stageY];
+        this._cursor = this._horizontal ? stageX : stageY;
         if (envelope !== undefined)
             this._envelope = envelope;
         this.update();
@@ -558,5 +583,6 @@ export class DockMagnifier {
 
     clearDebugState() {
         this._debugPointer = null;
+        this._cursor = null;
     }
 }
