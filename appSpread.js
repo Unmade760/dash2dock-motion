@@ -25,8 +25,8 @@ export class AppSpread {
         if (Main.overview.isDummy ||
             !Workspace?.Workspace?.prototype._isOverviewWindow ||
             !WorkspaceThumbnail?.WorkspaceThumbnail?.prototype._isOverviewWindow) {
-            log('Dash to dock: Unable to temporarily replace shell functions ' +
-                'for app spread - using previews instead');
+            log('Dash2Dock Motion: Unable to temporarily replace shell functions ' +
+                'for app spread, using previews instead');
             this.supported = false;
             return;
         }
