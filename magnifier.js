@@ -110,6 +110,12 @@ export class DockMagnifier {
             this._signalIds.push([obj, obj.connect(name, cb)]);
         };
         connect(this._hoverBox, 'notify::hover', () => this._syncTarget());
+        // The strip can be relaid out mid hover, when an app icon animates in.
+        // Paused keeps the frozen transforms under an open menu.
+        connect(this._dash, 'items-allocated', () => {
+            if (!this._paused && this._envelope > 0)
+                this.update();
+        });
         // While a quicklist menu is open, freeze the current magnified state
         // (the icon stays magnified underneath its own menu).
         connect(this._dash, 'menu-opened', () => this._setPaused(true));

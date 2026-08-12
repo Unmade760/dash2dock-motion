@@ -145,6 +145,7 @@ export const DockDash = GObject.registerClass({
         'menu-opened': {},
         'menu-closed': {},
         'icon-size-changed': {},
+        'items-allocated': {},
     },
 }, class DockDash extends St.Widget {
     _init(monitorIndex) {
@@ -309,6 +310,15 @@ export const DockDash = GObject.registerClass({
         ]);
 
         this.connect('destroy', this._onDestroy.bind(this));
+    }
+
+    // Clutter advances timelines before it relayouts, so a frame callback that
+    // reads child allocations is a layout behind. An item animating in resizes
+    // the strip every frame, so the magnifier needs a second chance here, once
+    // the icons have their new allocations and before anything is painted.
+    vfunc_allocate(box) {
+        super.vfunc_allocate(box);
+        this.emit('items-allocated');
     }
 
     vfunc_get_preferred_height(forWidth) {
