@@ -1527,6 +1527,6 @@
 #dashtodockContainer.dash2dock-motion-no-highlight #dash .dash-item-container .show-apps:hover .overview-icon,
 #dashtodockContainer.dash2dock-motion-no-highlight #dash .dash-item-container .show-apps:active .overview-icon,
 #dashtodockContainer.dash2dock-motion-no-highlight #dash .dash-item-container .show-apps:focus .overview-icon {
-    background-color: transparent;
-    box-shadow: none;
+    background-color: transparent !important;
+    box-shadow: none !important;
 }

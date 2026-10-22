@@ -20,7 +20,6 @@ import {
     Layout,
     Main,
     OverviewControls,
-    PointerWatcher,
     Workspace,
     WorkspacesView,
     WorkspaceSwitcherPopup,
@@ -555,19 +554,11 @@ const DockedDash = GObject.registerClass({
         // Remove existing barrier
         this._removeBarrier();
 
-        // Remove pointer watcher
-        if (this._dockWatch) {
-            PointerWatcher.getPointerWatcher()._removeWatch(this._dockWatch);
-            this._dockWatch = null;
-        }
+        this._removeDockWatch();
     }
 
     _updateAutoHideBarriers() {
-        // Remove pointer watcher
-        if (this._dockWatch) {
-            PointerWatcher.getPointerWatcher()._removeWatch(this._dockWatch);
-            this._dockWatch = null;
-        }
+        this._removeDockWatch();
 
         // Setup pressure barrier (GS38+ only)
         this._updatePressureBarrier();
@@ -970,15 +961,27 @@ const DockedDash = GObject.registerClass({
         if (this._autohideIsEnabled &&
             (!Utils.supportsExtendedBarriers() ||
              !DockManager.settings.requirePressureToShow)) {
-            const pointerWatcher = PointerWatcher.getPointerWatcher();
-            this._dockWatch = pointerWatcher.addWatch(
-                DOCK_DWELL_CHECK_INTERVAL, this._checkDockDwell.bind(this));
+            this._dockWatch = global.backend.get_cursor_tracker().connect(
+                'position-invalidated',
+                () => this._checkDockDwellLater(...global.get_pointer()));
             this._dockDwelling = false;
             this._dockDwellUserTime = 0;
         }
     }
 
-    _checkDockDwell(x, y) {
+    _checkDockDwellLater(x, y) {
+        if (this._checkDockDwellId > 0)
+            return;
+
+        this._checkDockDwellId = GLib.timeout_add(GLib.PRIORITY_DEFAULT,
+            DOCK_DWELL_CHECK_INTERVAL, () => {
+                this._checkDockDwellNow(x, y);
+                this._checkDockDwellId = 0;
+                return GLib.SOURCE_REMOVE;
+            });
+    }
+
+    _checkDockDwellNow(x, y) {
         const workArea = Main.layoutManager.getWorkAreaForMonitor(this._monitor.index);
         let shouldDwell;
         // Check for the correct screen edge, extending the sensitive area to the whole workarea,
@@ -1019,6 +1022,18 @@ const DockedDash = GObject.registerClass({
         } else {
             this._cancelDockDwell();
             this._dockDwelling = false;
+        }
+    }
+
+    _removeDockWatch() {
+        if (this._checkDockDwellId > 0) {
+            GLib.source_remove(this._checkDockDwellId);
+            this._checkDockDwellId = 0;
+        }
+
+        if (this._dockWatch) {
+            global.backend.get_cursor_tracker().disconnect(this._dockWatch);
+            this._dockWatch = null;
         }
     }
 
