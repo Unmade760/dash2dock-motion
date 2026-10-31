@@ -42,7 +42,7 @@
  * In the *enable()* function, create a *DesktopIconsUsableAreaClass()*
  * object with
  *
- *     new DesktopIconsIntegration.DesktopIconsUsableAreaClass(object);
+ *     new DesktopIconsIntegration.DesktopIconsUsableAreaClass(uuid);
  *
  * Now, in the *disable()* function just call to the *destroy()* method before
  * nullifying the pointer. You must create a new object in enable() the next
@@ -62,7 +62,6 @@
 import GLib from 'gi://GLib';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as ExtensionUtils from 'resource:///org/gnome/shell/misc/extensionUtils.js';
-import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 
 const IDENTIFIER_UUID = '130cbc66-235c-4bd6-8571-98d2d8bba5e2';
 
@@ -72,9 +71,8 @@ export class DesktopIconsUsableAreaClass {
                (extension?.state === ExtensionUtils.ExtensionState.ACTIVE);
     }
 
-    constructor() {
-        const Me = Extension.lookupByURL(import.meta.url);
-        this._UUID = Me.uuid;
+    constructor(uuid) {
+        this._UUID = uuid;
         this._extensionManager = Main.extensionManager;
         this._timedMarginsID = 0;
         this._margins = {};

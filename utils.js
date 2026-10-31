@@ -16,7 +16,7 @@ import {
     Docking,
 } from './imports.js';
 
-const {_gi: Gi} = imports;
+import {Extension} from './dependencies/shell/extensions/extension.js';
 
 export const SignalsHandlerFlags = Object.freeze({
     NONE: 0,
@@ -375,39 +375,38 @@ export class InjectionsHandler extends BasicHandler {
  * and restored
  */
 export class VFuncInjectionsHandler extends BasicHandler {
+    constructor(parentObject) {
+        super(parentObject);
+        this._manager = new Extension.InjectionManager();
+    }
+
     _create(prototype, name, injectedFunction) {
-        const original = prototype[`vfunc_${name}`];
+        const vfunc = `vfunc_${name}`;
+        const original = prototype[vfunc];
         if (!(original instanceof Function))
             throw new Error(`Virtual function ${name} is not available for ${prototype}`);
-        this._replaceVFunc(prototype, name, injectedFunction);
-        return [prototype, name];
+        this._manager.overrideMethod(prototype, vfunc, () => injectedFunction);
+        return [prototype, name, original];
     }
 
     _remove(item) {
-        const [prototype, name] = item;
-        const originalVFunc = prototype[`vfunc_${name}`];
+        const [prototype, name, original] = item;
+        const vfunc = `vfunc_${name}`;
         try {
             // This may fail if trying to reset to a never-overridden vfunc
             // as gjs doesn't consider it a function, even if it's true that
-            // originalVFunc instanceof Function.
-            this._replaceVFunc(prototype, name, originalVFunc);
+            // original instanceof Function.
+            this._manager.restoreMethod(prototype, vfunc);
         } catch {
             try {
-                this._replaceVFunc(prototype, name, function (...args) {
+                this._manager.overrideMethod(prototype, vfunc, () => function (...args) {
                     // eslint-disable-next-line no-invalid-this
-                    return originalVFunc.call(this, ...args);
+                    return original.call(this, ...args);
                 });
             } catch (e) {
-                logError(e, `Removing vfunc_${name}`);
+                logError(e, `Removing ${vfunc}`);
             }
         }
-    }
-
-    _replaceVFunc(prototype, name, func) {
-        if (Gi.gobject_prototype_symbol && Gi.gobject_prototype_symbol in prototype)
-            prototype = prototype[Gi.gobject_prototype_symbol];
-
-        return prototype[Gi.hook_up_vfunc_symbol](name, func);
     }
 }
 

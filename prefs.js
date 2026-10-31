@@ -4,6 +4,7 @@
 // contributors. Distributed under the GNU General Public License,
 // version 2 or later.
 
+import Adw from 'gi://Adw';
 import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
 import Gdk from 'gi://Gdk';
@@ -1382,9 +1383,12 @@ const DockSettings = GObject.registerClass({
 });
 
 export default class DockPreferences extends ExtensionPreferences {
-    getPreferencesWidget() {
+    fillPreferencesWindow(window) {
         const settings = new DockSettings(this);
-        const {widget} = settings;
-        return widget;
+        const page = new Adw.PreferencesPage();
+        const group = new Adw.PreferencesGroup();
+        group.add(settings.widget);
+        page.add(group);
+        window.add(page);
     }
 }

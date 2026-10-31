@@ -300,6 +300,10 @@ const DockedDash = GObject.registerClass({
         this._barrier = null;
         this._removeBarrierTimeoutId = 0;
 
+        // The workspace popup this dock created for scrolling, if any
+        this._switcherPopup = null;
+        this._switcherPopupDestroyId = 0;
+
         // Initialize dwelling system variables
         this._dockDwelling = false;
         this._dockWatch = null;
@@ -553,8 +557,18 @@ const DockedDash = GObject.registerClass({
 
         // Remove existing barrier
         this._removeBarrier();
+        this._destroyPressureBarrier();
 
         this._removeDockWatch();
+        this._cancelDockDwell();
+        this._releaseSwitcherPopup();
+
+        if (this._optionalScrollWorkspaceSwitchDeadTimeId) {
+            GLib.source_remove(this._optionalScrollWorkspaceSwitchDeadTimeId);
+            this._optionalScrollWorkspaceSwitchDeadTimeId = 0;
+        }
+
+        this.staticBox = null;
     }
 
     _updateAutoHideBarriers() {
@@ -1069,16 +1083,21 @@ const DockedDash = GObject.registerClass({
         return GLib.SOURCE_REMOVE;
     }
 
+    _destroyPressureBarrier() {
+        if (!this._pressureBarrier)
+            return;
+
+        this._pressureBarrier.disconnectObject(this);
+        this._pressureBarrier.destroy();
+        this._pressureBarrier = null;
+    }
+
     _updatePressureBarrier() {
         const {settings} = DockManager;
         this._canUsePressure = Utils.supportsExtendedBarriers();
         const {pressureThreshold} = settings;
 
-        // Remove existing pressure barrier
-        if (this._pressureBarrier) {
-            this._pressureBarrier.destroy();
-            this._pressureBarrier = null;
-        }
+        this._destroyPressureBarrier();
 
         if (this._barrier) {
             this._barrier.destroy();
@@ -1091,11 +1110,11 @@ const DockedDash = GObject.registerClass({
             this._pressureBarrier = new Layout.PressureBarrier(
                 pressureThreshold, settings.showDelay * 1000,
                 Shell.ActionMode.NORMAL | Shell.ActionMode.OVERVIEW);
-            this._pressureBarrier.connect('trigger', _barrier => {
+            this._pressureBarrier.connectObject('trigger', _barrier => {
                 if (!settings.autohideInFullscreen && this._monitor.inFullscreen)
                     return;
                 this._onPressureSensed();
-            });
+            }, this);
         }
     }
 
@@ -1363,6 +1382,9 @@ const DockedDash = GObject.registerClass({
     }
 
     _updateStaticBox() {
+        if (!this.staticBox)
+            return;
+
         // For BOTTOM and RIGHT the box is measured back from the far edge,
         // which the edge distance padding does not move. TOP and LEFT already
         // pick the gap up through the slider's own offset. Only the padding
@@ -1421,6 +1443,17 @@ const DockedDash = GObject.registerClass({
             {focusCallback: timestamp => this._onAccessibilityFocus(timestamp)});
     }
 
+    // Hand the popup this dock put in the shell back, so the shell makes its own
+    _releaseSwitcherPopup() {
+        if (!this._switcherPopup)
+            return;
+
+        this._switcherPopup.disconnect(this._switcherPopupDestroyId);
+        if (Main.wm._workspaceSwitcherPopup === this._switcherPopup)
+            delete Main.wm._workspaceSwitcherPopup;
+        this._switcherPopup = null;
+    }
+
     /**
      * Switch workspace by scrolling over the dock
      */
@@ -1437,6 +1470,7 @@ const DockedDash = GObject.registerClass({
 
         const disable = () => {
             this._signalsHandler.removeWithLabel(Labels.WORKSPACE_SWITCH_SCROLL);
+            this._releaseSwitcherPopup();
 
             if (this._optionalScrollWorkspaceSwitchDeadTimeId) {
                 GLib.source_remove(this._optionalScrollWorkspaceSwitchDeadTimeId);
@@ -1512,15 +1546,19 @@ const DockedDash = GObject.registerClass({
                     } else {
                         Main.wm._workspaceSwitcherPopup = new WorkspaceSwitcherPopup.WorkspaceSwitcherPopup();
                     }
+                    const popup = Main.wm._workspaceSwitcherPopup;
+                    this._switcherPopup = popup;
+                    this._switcherPopupDestroyId = popup.connect('destroy', actor => {
+                        if (Main.wm._workspaceSwitcherPopup === actor)
+                            delete Main.wm._workspaceSwitcherPopup;
+                        if (this._switcherPopup === actor)
+                            this._switcherPopup = null;
+                    });
                 }
                 // Set the actor non reactive, so that it doesn't prevent the
                 // clicks events from reaching the dash actor. I can't see a reason
                 // why it should be reactive.
                 Main.wm._workspaceSwitcherPopup.reactive = false;
-                Main.wm._workspaceSwitcherPopup.connect('destroy', actor => {
-                    if (Main.wm._workspaceSwitcherPopup === actor)
-                        delete Main.wm._workspaceSwitcherPopup;
-                });
 
                 // If Workspace Grid is installed, let them handle the scroll behavior.
                 if (global.workspace_manager.workspace_grid !== undefined)
@@ -1824,7 +1862,7 @@ export class DockManager {
 
         this._iconTheme = new St.IconTheme();
 
-        this._desktopIconsUsableArea = new DesktopIconsIntegration.DesktopIconsUsableAreaClass();
+        this._desktopIconsUsableArea = new DesktopIconsIntegration.DesktopIconsUsableAreaClass(this._extension.uuid);
         this._oldDash = Main.overview.isDummy ? null : Main.overview.dash;
         this._discreteGpuAvailable = AppDisplay.discreteGpuAvailable;
         this._appSpread = new AppSpread.AppSpread();

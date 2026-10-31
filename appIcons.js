@@ -47,7 +47,7 @@ const {gettext: __, ngettext} = Extension;
 
 const DBusMenu = await DBusMenuUtils.haveDBusMenu();
 
-const tracker = Shell.WindowTracker.get_default();
+const getTracker = () => Shell.WindowTracker.get_default();
 
 const Labels = Object.freeze({
     ISOLATE_MONITORS: Symbol('isolate-monitors'),
@@ -251,7 +251,7 @@ export const DockAbstractAppIcon = GObject.registerClass({
     }
 
     ownsWindow(window) {
-        return this.app === tracker.get_window_app(window);
+        return this.app === getTracker().get_window_app(window);
     }
 
     _onWindowEntered(metaScreen, monitorIndex, metaWin) {
@@ -346,7 +346,7 @@ export const DockAbstractAppIcon = GObject.registerClass({
     }
 
     _updateFocusState() {
-        this.focused = tracker.focus_app === this.app && this.running;
+        this.focused = getTracker().focus_app === this.app && this.running;
     }
 
     _updateUrgentWindows(interestingWindows) {
@@ -1035,7 +1035,7 @@ const DockAppIcon = GObject.registerClass({
     _init(app, monitorIndex, iconAnimator) {
         super._init(app, monitorIndex, iconAnimator);
 
-        this._signalsHandler.add(tracker, 'notify::focus-app', () => this._updateFocusState());
+        this._signalsHandler.add(getTracker(), 'notify::focus-app', () => this._updateFocusState());
     }
 });
 
@@ -1048,7 +1048,7 @@ const DockLocationAppIcon = GObject.registerClass({
         super._init(app, monitorIndex, iconAnimator);
 
         if (Docking.DockManager.settings.isolateLocations) {
-            this._signalsHandler.add(tracker, 'notify::focus-app', () => this._updateFocusState());
+            this._signalsHandler.add(getTracker(), 'notify::focus-app', () => this._updateFocusState());
         } else {
             this._signalsHandler.add(global.display, 'notify::focus-window',
                 () => this._updateFocusState());
@@ -1109,7 +1109,7 @@ const DockAppIconMenu = class DockAppIconMenu extends PopupMenu.PopupMenu {
             if (!source.mapped)
                 this.close();
         });
-        source.connect('destroy', () => this.destroy());
+        this._signalsHandler.add(source, 'destroy', () => this.destroy());
 
         Main.uiGroup.add_child(this.actor);
 
