@@ -5,8 +5,8 @@
 // Icon scale is a direct function of the pointer position through a
 // raised-cosine (Hann) window, recomputed every frame. Positions come from a
 // cumulative layout walk: each slot is widened by its own magnification and
-// the results are accumulated, anchored so the point under the cursor stays
-// under the cursor. Icons are pinned to the dock's screen edge and grow
+// the results are accumulated, centred so the strip grows evenly on both
+// sides. Icons are pinned to the dock's screen edge and grow
 // outwards past the background.
 //
 // Two quantities are integrated over time instead of being read straight off
@@ -222,6 +222,12 @@ export class DockMagnifier {
         this._timeline = null;
     }
 
+    _centered() {
+        return !this._settings ||
+            !this._settings.get_boolean('extend-height') ||
+            this._settings.get_boolean('always-center-icons');
+    }
+
     _pointerAxis() {
         const pointer = this._debugPointer ?? global.get_pointer();
         return this._horizontal ? pointer[0] : pointer[1];
@@ -312,10 +318,13 @@ export class DockMagnifier {
                 (bounds[i + 1] - bounds[i]) * elements[i].scale;
         }
 
-        // Anchor: the base-space point under the cursor maps to itself, so
-        // the icon under the pointer never slides out from beneath it.
+        // Grow evenly on both sides so the strip keeps its centre like the macOS dock
+        // An extended dock starts at the screen edge so there the point under
+        // the cursor stays put instead and the strip grows away from the edge
         let shift = 0;
-        if (cursor > bounds[0] && cursor < bounds[n]) {
+        if (this._centered()) {
+            shift = (bounds[0] + bounds[n] - newBounds[0] - newBounds[n]) / 2;
+        } else if (cursor > bounds[0] && cursor < bounds[n]) {
             let i = 0;
             while (i < n - 1 && bounds[i + 1] < cursor)
                 i++;
@@ -567,8 +576,12 @@ export class DockMagnifier {
 
         // Reposition any label that is still showing (e.g. pointer parked on
         // an icon while the envelope collapsed).
-        for (const child of this._dash._box.get_children())
+        // A click while magnified aims the minimize target at the enlarged icon
+        // so put every target back on its resting slot
+        for (const child of this._dash._box.get_children()) {
             child.updateLabelPosition?.();
+            child.child?.updateIconGeometry?.();
+        }
     }
 
     // ---- test hooks -------------------------------------------------------

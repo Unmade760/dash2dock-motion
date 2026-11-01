@@ -419,7 +419,7 @@ export const DockAbstractAppIcon = GObject.registerClass({
     /**
      * Update target for minimization animation
      */
-    updateIconGeometry() {
+    updateIconGeometry(onScreen = false) {
         // If (for unknown reason) the actor is not on the stage the reported size
         // and position are random values, which might exceeds the integer range
         // resulting in an error when assigned to the a rect. This is a more like
@@ -441,7 +441,14 @@ export const DockAbstractAppIcon = GObject.registerClass({
             baseY += ancestor.allocation.y1;
             ancestor = ancestor.get_parent();
         }
-        if (ancestor) {
+        if (onScreen) {
+            // Where the icon is drawn right now with the magnifier scale and shift
+            const box = this.get_transformed_extents();
+            rect.x = Math.round(box.get_x());
+            rect.y = Math.round(box.get_y());
+            rect.width = Math.round(box.get_width());
+            rect.height = Math.round(box.get_height());
+        } else if (ancestor) {
             const [dashX, dashY] = ancestor.get_transformed_position();
             rect.x = Math.round(dashX + baseX);
             rect.y = Math.round(dashY + baseY);
@@ -928,6 +935,9 @@ export const DockAbstractAppIcon = GObject.registerClass({
 
     _minimizeWindow(param) {
         // Param true make all app windows minimize
+        // The click came from the dock so the icon may be magnified and moved
+        // and the lamp has to land on the icon the user sees
+        this.updateIconGeometry(true);
         const windows = this.getInterestingWindows();
         const currentWorkspace = global.workspace_manager.get_active_workspace();
         for (let i = 0; i < windows.length; i++) {
