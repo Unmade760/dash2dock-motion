@@ -57,9 +57,10 @@ install: compile-schemas
 uninstall:
 	rm -rf $(INSTALL_DIR)
 
+# GNOME 44+ compiles schemas on install; EGO flags a shipped gschemas.compiled.
 zip: compile-schemas
 	rm -f $(UUID).zip
-	zip -rq $(UUID).zip $(SOURCES) $(DIRS)
+	zip -rq $(UUID).zip $(SOURCES) $(DIRS) -x schemas/gschemas.compiled
 	@echo "Created $(UUID).zip"
 
 clean:

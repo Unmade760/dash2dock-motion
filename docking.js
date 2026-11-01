@@ -1443,7 +1443,8 @@ const DockedDash = GObject.registerClass({
             {focusCallback: timestamp => this._onAccessibilityFocus(timestamp)});
     }
 
-    // Hand the popup this dock put in the shell back, so the shell makes its own
+    // Drop our handler and clear the shell's reference to the popup this dock
+    // created, so the shell creates a fresh one next time.
     _releaseSwitcherPopup() {
         if (!this._switcherPopup)
             return;
