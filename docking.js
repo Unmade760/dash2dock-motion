@@ -292,7 +292,7 @@ const DockedDash = GObject.registerClass({
 
         // this store size and the position where the dash is shown;
         // used by intellihide module to check window overlap.
-        this.staticBox = new Clutter.ActorBox();
+        this.staticBox = Clutter.ActorBox.new(0, 0, 0, 0);
 
         // Initialize pressure barrier variables
         this._canUsePressure = false;
