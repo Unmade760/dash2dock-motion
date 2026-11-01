@@ -12,6 +12,7 @@ SOURCES = \
 	dash.js \
 	dbusmenuUtils.js \
 	desktopIconsIntegration.js \
+	dockStruts.js \
 	docking.js \
 	extension.js \
 	fileManager1API.js \

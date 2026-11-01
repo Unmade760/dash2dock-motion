@@ -4,12 +4,12 @@
 // contributors. Distributed under the GNU General Public License,
 // version 2 or later.
 
-import Adw from 'gi://Adw';
 import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
 import Gdk from 'gi://Gdk';
 import Gio from 'gi://Gio';
 import Gtk from 'gi://Gtk';
+import Adw from 'gi://Adw';
 
 import {
     ExtensionPreferences,
@@ -197,12 +197,17 @@ const DockSettings = GObject.registerClass({
             extensionPreferences.metadata['gettext-domain']);
         this._builder.add_from_file(`${extensionPreferences.path}/Settings.ui`);
 
-        this.widget = this._builder.get_object('settings_notebook');
+        const notebook = this._builder.get_object('settings_notebook');
+        this.widget = notebook;
         this._buildMagnificationPage();
+        const group = new Adw.PreferencesGroup();
+        group.add(notebook);
+        this.page = new Adw.PreferencesPage();
+        this.page.add(group);
 
         // Set a reasonable initial window height
-        this.widget.connect('realize', () => {
-            const rootWindow = this.widget.get_root();
+        this.page.connect('realize', () => {
+            const rootWindow = this.page.get_root();
             rootWindow.set_default_size(-1, 850);
             rootWindow.connect('close-request', () => this._onWindowsClosed());
         });
@@ -601,13 +606,13 @@ const DockSettings = GObject.registerClass({
 
             if (monitor.isPrimary) {
                 dockMonitorCombo.append_text(
-                    /* Translators: This will be followed by Display Name - Connector. */
+                    /* TRANSLATORS: This will be followed by Display Name - Connector. */
                     `${__('Primary monitor: ') + monitor.displayName} - ${
                         monitor.connector}`);
                 primaryIndex = this._monitors.length;
             } else {
                 dockMonitorCombo.append_text(
-                    /* Translators: Followed by monitor index, Display Name - Connector. */
+                    /* TRANSLATORS: Followed by monitor index, Display Name - Connector. */
                     `${__('Secondary monitor ') + (monitor.index + 1)} - ${
                         monitor.displayName} - ${monitor.connector}`);
             }
@@ -621,6 +626,11 @@ const DockSettings = GObject.registerClass({
 
         if (dockMonitorCombo.get_active() < 0 && primaryIndex >= 0)
             dockMonitorCombo.set_active(primaryIndex);
+    }
+
+    _update_scroll_action_warning() {
+        const sensitive = !this._builder.get_object('icon_size_fixed_checkbutton').get_active();
+        this._builder.get_object('note_about_fixed_size_icon').set_visible(!sensitive);
     }
 
     _bindSettings() {
@@ -711,7 +721,7 @@ const DockSettings = GObject.registerClass({
         this._builder.get_object('intelligent_autohide_button').connect('clicked', () => {
             const dialog = new Gtk.Dialog({
                 title: __('Intelligent autohide customization'),
-                transient_for: this.widget.get_root(),
+                transient_for: this.page.get_root(),
                 use_header_bar: true,
                 modal: true,
             });
@@ -859,24 +869,39 @@ const DockSettings = GObject.registerClass({
             Gio.SettingsBindFlags.DEFAULT);
         const applicationButtonIsolationButton =
             this._builder.get_object('application_button_isolation_button');
-        this._settings.bind('isolate-workspaces',
-            applicationButtonIsolationButton,
-            'active',
-            Gio.SettingsBindFlags.DEFAULT);
-        applicationButtonIsolationButton.connect(
-            'notify::sensitive', check => {
-                if (check.sensitive) {
-                    [check.label] = check.label.split('\n');
-                } else {
-                    check.label += `\n${
-                        __('Managed by GNOME Multitasking\'s Application Switching setting.')}`;
-                }
-            });
-        this._appSwitcherSettings.bind('current-workspace-only',
-            applicationButtonIsolationButton,
-            'sensitive',
-            Gio.SettingsBindFlags.INVERT_BOOLEAN |
-            Gio.SettingsBindFlags.SYNC_CREATE);
+        const applicationButtonIsolationLabel =
+            applicationButtonIsolationButton.label;
+
+        const hasIsolationOverride = () =>
+            this._settings.get_user_value('isolate-workspaces') !== null;
+        const gnomeIsolation = () =>
+            this._appSwitcherSettings.get_boolean('current-workspace-only');
+
+        let updatingIsolationButton = false;
+        const updateIsolationButton = () => {
+            updatingIsolationButton = true;
+            applicationButtonIsolationButton.active = hasIsolationOverride()
+                ? this._settings.get_boolean('isolate-workspaces')
+                : gnomeIsolation();
+            updatingIsolationButton = false;
+            applicationButtonIsolationButton.label = hasIsolationOverride()
+                ? applicationButtonIsolationLabel
+                : `${applicationButtonIsolationLabel}\n${
+                    __('Follows GNOME Multitasking\'s Application Switching setting.')}`;
+        };
+        applicationButtonIsolationButton.connect('notify::active', check => {
+            if (updatingIsolationButton)
+                return;
+            if (check.active === gnomeIsolation())
+                this._settings.reset('isolate-workspaces');
+            else
+                this._settings.set_boolean('isolate-workspaces', check.active);
+        });
+        updateIsolationButton();
+        this._settings.connect('changed::isolate-workspaces',
+            updateIsolationButton);
+        this._appSwitcherSettings.connect('changed::current-workspace-only',
+            updateIsolationButton);
         this._settings.bind('workspace-agnostic-urgent-windows',
             this._builder.get_object('application_button_urgent_button'),
             'active',
@@ -1009,6 +1034,11 @@ const DockSettings = GObject.registerClass({
             this._settings.set_enum('click-action', widget.get_active());
         });
 
+        this._builder.get_object('icon_size_fixed_checkbutton').connect('toggled', () => {
+            this._update_scroll_action_warning();
+        });
+        this._update_scroll_action_warning();
+
         this._builder.get_object('scroll_action_combo').set_active(this._settings.get_enum('scroll-action'));
         this._builder.get_object('scroll_action_combo').connect('changed', widget => {
             this._settings.set_enum('scroll-action', widget.get_active());
@@ -1029,7 +1059,7 @@ const DockSettings = GObject.registerClass({
         this._builder.get_object('overlay_button').connect('clicked', () => {
             const dialog = new Gtk.Dialog({
                 title: __('Show dock and application numbers'),
-                transient_for: this.widget.get_root(),
+                transient_for: this.page.get_root(),
                 use_header_bar: true,
                 modal: true,
             });
@@ -1088,7 +1118,7 @@ const DockSettings = GObject.registerClass({
         this._builder.get_object('middle_click_options_button').connect('clicked', () => {
             const dialog = new Gtk.Dialog({
                 title: __('Customize middle-click behavior'),
-                transient_for: this.widget.get_root(),
+                transient_for: this.page.get_root(),
                 use_header_bar: true,
                 modal: true,
             });
@@ -1185,7 +1215,7 @@ const DockSettings = GObject.registerClass({
         this._builder.get_object('running_indicators_advance_settings_button').connect('clicked', () => {
             const dialog = new Gtk.Dialog({
                 title: __('Customize running indicators'),
-                transient_for: this.widget.get_root(),
+                transient_for: this.page.get_root(),
                 use_header_bar: true,
                 modal: true,
             });
@@ -1300,7 +1330,7 @@ const DockSettings = GObject.registerClass({
         this._builder.get_object('dynamic_opacity_button').connect('clicked', () => {
             const dialog = new Gtk.Dialog({
                 title: __('Customize opacity'),
-                transient_for: this.widget.get_root(),
+                transient_for: this.page.get_root(),
                 use_header_bar: true,
                 modal: true,
             });
@@ -1385,10 +1415,6 @@ const DockSettings = GObject.registerClass({
 export default class DockPreferences extends ExtensionPreferences {
     fillPreferencesWindow(window) {
         const settings = new DockSettings(this);
-        const page = new Adw.PreferencesPage();
-        const group = new Adw.PreferencesGroup();
-        group.add(settings.widget);
-        page.add(group);
-        window.add(page);
+        window.add(settings.page);
     }
 }

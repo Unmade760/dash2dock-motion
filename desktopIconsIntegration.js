@@ -71,19 +71,19 @@ export class DesktopIconsUsableAreaClass {
                (extension?.state === ExtensionUtils.ExtensionState.ACTIVE);
     }
 
-    constructor(uuid) {
-        this._UUID = uuid;
+    constructor(extension) {
+        this._UUID = extension.uuid;
         this._extensionManager = Main.extensionManager;
         this._timedMarginsID = 0;
         this._margins = {};
-        this._emID = this._extensionManager.connect('extension-state-changed', (_obj, extension) => {
-            if (!extension)
+        this._emID = this._extensionManager.connect('extension-state-changed', (_obj, ext) => {
+            if (!ext)
                 return;
 
             // If an extension is being enabled and lacks the
             // DesktopIconsUsableArea object, we can avoid launching a refresh
-            if (this._checkIfExtensionIsEnabled(extension)) {
-                this._sendMarginsToExtension(extension);
+            if (this._checkIfExtensionIsEnabled(ext)) {
+                this._sendMarginsToExtension(ext);
                 return;
             }
             // if the extension is being disabled, we must do a full refresh,

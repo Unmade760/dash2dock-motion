@@ -1477,6 +1477,152 @@
   background-position: 0px 0px;
   background-size: contain; }
 
+/* Upstream v110 gap between the icon strip and the show apps icon */
+#dashtodockContainer.bottom #dash #dashtodockDashContainer > #dashtodockDashScrollview {
+  margin: 0 2px;
+}
+#dashtodockContainer.bottom #dash #dashtodockDashContainer > #dashtodockDashScrollview:ltr:first-child, #dashtodockContainer.bottom #dash #dashtodockDashContainer > #dashtodockDashScrollview:rtl:last-child {
+  margin-left: 0;
+}
+#dashtodockContainer.bottom #dash #dashtodockDashContainer > #dashtodockDashScrollview:ltr:last-child, #dashtodockContainer.bottom #dash #dashtodockDashContainer > #dashtodockDashScrollview:rtl:first-child {
+  margin-right: 0;
+}
+#dashtodockContainer.bottom.shrink #dash #dashtodockDashContainer > #dashtodockDashScrollview {
+  margin: 0 2px;
+}
+#dashtodockContainer.bottom.shrink #dash #dashtodockDashContainer > #dashtodockDashScrollview:ltr:first-child, #dashtodockContainer.bottom.shrink #dash #dashtodockDashContainer > #dashtodockDashScrollview:rtl:last-child {
+  margin-left: 0;
+}
+#dashtodockContainer.bottom.shrink #dash #dashtodockDashContainer > #dashtodockDashScrollview:ltr:last-child, #dashtodockContainer.bottom.shrink #dash #dashtodockDashContainer > #dashtodockDashScrollview:rtl:first-child {
+  margin-right: 0;
+}
+#dashtodockContainer.bottom.extended #dash #dashtodockDashContainer > #dashtodockDashScrollview {
+  margin: 0 2px;
+}
+#dashtodockContainer.bottom.extended #dash #dashtodockDashContainer > #dashtodockDashScrollview:ltr:first-child, #dashtodockContainer.bottom.extended #dash #dashtodockDashContainer > #dashtodockDashScrollview:rtl:last-child {
+  margin-left: 0;
+}
+#dashtodockContainer.bottom.extended #dash #dashtodockDashContainer > #dashtodockDashScrollview:ltr:last-child, #dashtodockContainer.bottom.extended #dash #dashtodockDashContainer > #dashtodockDashScrollview:rtl:first-child {
+  margin-right: 0;
+}
+#dashtodockContainer.bottom.extended.shrink #dash #dashtodockDashContainer > #dashtodockDashScrollview {
+  margin: 0 2px;
+}
+#dashtodockContainer.bottom.extended.shrink #dash #dashtodockDashContainer > #dashtodockDashScrollview:ltr:first-child, #dashtodockContainer.bottom.extended.shrink #dash #dashtodockDashContainer > #dashtodockDashScrollview:rtl:last-child {
+  margin-left: 0;
+}
+#dashtodockContainer.bottom.extended.shrink #dash #dashtodockDashContainer > #dashtodockDashScrollview:ltr:last-child, #dashtodockContainer.bottom.extended.shrink #dash #dashtodockDashContainer > #dashtodockDashScrollview:rtl:first-child {
+  margin-right: 0;
+}
+#dashtodockContainer.top #dash #dashtodockDashContainer > #dashtodockDashScrollview {
+  margin: 0 2px;
+}
+#dashtodockContainer.top #dash #dashtodockDashContainer > #dashtodockDashScrollview:ltr:first-child, #dashtodockContainer.top #dash #dashtodockDashContainer > #dashtodockDashScrollview:rtl:last-child {
+  margin-left: 0;
+}
+#dashtodockContainer.top #dash #dashtodockDashContainer > #dashtodockDashScrollview:ltr:last-child, #dashtodockContainer.top #dash #dashtodockDashContainer > #dashtodockDashScrollview:rtl:first-child {
+  margin-right: 0;
+}
+#dashtodockContainer.top.shrink #dash #dashtodockDashContainer > #dashtodockDashScrollview {
+  margin: 0 2px;
+}
+#dashtodockContainer.top.shrink #dash #dashtodockDashContainer > #dashtodockDashScrollview:ltr:first-child, #dashtodockContainer.top.shrink #dash #dashtodockDashContainer > #dashtodockDashScrollview:rtl:last-child {
+  margin-left: 0;
+}
+#dashtodockContainer.top.shrink #dash #dashtodockDashContainer > #dashtodockDashScrollview:ltr:last-child, #dashtodockContainer.top.shrink #dash #dashtodockDashContainer > #dashtodockDashScrollview:rtl:first-child {
+  margin-right: 0;
+}
+#dashtodockContainer.top.extended #dash #dashtodockDashContainer > #dashtodockDashScrollview {
+  margin: 0 2px;
+}
+#dashtodockContainer.top.extended #dash #dashtodockDashContainer > #dashtodockDashScrollview:ltr:first-child, #dashtodockContainer.top.extended #dash #dashtodockDashContainer > #dashtodockDashScrollview:rtl:last-child {
+  margin-left: 0;
+}
+#dashtodockContainer.top.extended #dash #dashtodockDashContainer > #dashtodockDashScrollview:ltr:last-child, #dashtodockContainer.top.extended #dash #dashtodockDashContainer > #dashtodockDashScrollview:rtl:first-child {
+  margin-right: 0;
+}
+#dashtodockContainer.top.extended.shrink #dash #dashtodockDashContainer > #dashtodockDashScrollview {
+  margin: 0 2px;
+}
+#dashtodockContainer.top.extended.shrink #dash #dashtodockDashContainer > #dashtodockDashScrollview:ltr:first-child, #dashtodockContainer.top.extended.shrink #dash #dashtodockDashContainer > #dashtodockDashScrollview:rtl:last-child {
+  margin-left: 0;
+}
+#dashtodockContainer.top.extended.shrink #dash #dashtodockDashContainer > #dashtodockDashScrollview:ltr:last-child, #dashtodockContainer.top.extended.shrink #dash #dashtodockDashContainer > #dashtodockDashScrollview:rtl:first-child {
+  margin-right: 0;
+}
+#dashtodockContainer.left #dash #dashtodockDashContainer > #dashtodockDashScrollview {
+  margin: 2px 0;
+}
+#dashtodockContainer.left #dash #dashtodockDashContainer > #dashtodockDashScrollview:first-child {
+  margin-top: 0;
+}
+#dashtodockContainer.left #dash #dashtodockDashContainer > #dashtodockDashScrollview:last-child {
+  margin-bottom: 0;
+}
+#dashtodockContainer.left.shrink #dash #dashtodockDashContainer > #dashtodockDashScrollview {
+  margin: 2px 0;
+}
+#dashtodockContainer.left.shrink #dash #dashtodockDashContainer > #dashtodockDashScrollview:first-child {
+  margin-top: 0;
+}
+#dashtodockContainer.left.shrink #dash #dashtodockDashContainer > #dashtodockDashScrollview:last-child {
+  margin-bottom: 0;
+}
+#dashtodockContainer.left.extended #dash #dashtodockDashContainer > #dashtodockDashScrollview {
+  margin: 2px 0;
+}
+#dashtodockContainer.left.extended #dash #dashtodockDashContainer > #dashtodockDashScrollview:first-child {
+  margin-top: 0;
+}
+#dashtodockContainer.left.extended #dash #dashtodockDashContainer > #dashtodockDashScrollview:last-child {
+  margin-bottom: 0;
+}
+#dashtodockContainer.left.extended.shrink #dash #dashtodockDashContainer > #dashtodockDashScrollview {
+  margin: 2px 0;
+}
+#dashtodockContainer.left.extended.shrink #dash #dashtodockDashContainer > #dashtodockDashScrollview:first-child {
+  margin-top: 0;
+}
+#dashtodockContainer.left.extended.shrink #dash #dashtodockDashContainer > #dashtodockDashScrollview:last-child {
+  margin-bottom: 0;
+}
+#dashtodockContainer.right #dash #dashtodockDashContainer > #dashtodockDashScrollview {
+  margin: 2px 0;
+}
+#dashtodockContainer.right #dash #dashtodockDashContainer > #dashtodockDashScrollview:first-child {
+  margin-top: 0;
+}
+#dashtodockContainer.right #dash #dashtodockDashContainer > #dashtodockDashScrollview:last-child {
+  margin-bottom: 0;
+}
+#dashtodockContainer.right.shrink #dash #dashtodockDashContainer > #dashtodockDashScrollview {
+  margin: 2px 0;
+}
+#dashtodockContainer.right.shrink #dash #dashtodockDashContainer > #dashtodockDashScrollview:first-child {
+  margin-top: 0;
+}
+#dashtodockContainer.right.shrink #dash #dashtodockDashContainer > #dashtodockDashScrollview:last-child {
+  margin-bottom: 0;
+}
+#dashtodockContainer.right.extended #dash #dashtodockDashContainer > #dashtodockDashScrollview {
+  margin: 2px 0;
+}
+#dashtodockContainer.right.extended #dash #dashtodockDashContainer > #dashtodockDashScrollview:first-child {
+  margin-top: 0;
+}
+#dashtodockContainer.right.extended #dash #dashtodockDashContainer > #dashtodockDashScrollview:last-child {
+  margin-bottom: 0;
+}
+#dashtodockContainer.right.extended.shrink #dash #dashtodockDashContainer > #dashtodockDashScrollview {
+  margin: 2px 0;
+}
+#dashtodockContainer.right.extended.shrink #dash #dashtodockDashContainer > #dashtodockDashScrollview:first-child {
+  margin-top: 0;
+}
+#dashtodockContainer.right.extended.shrink #dash #dashtodockDashContainer > #dashtodockDashScrollview:last-child {
+  margin-bottom: 0;
+}
+
 /* ==========================================================================
    Dash2Dock Motion: glass slab (rim light,
    aggressive rounding). Layer 1 (backdrop blur) is Shell.BlurEffect in

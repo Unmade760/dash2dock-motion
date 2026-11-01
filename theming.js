@@ -72,19 +72,22 @@ export class ThemeManager {
 
         this._signalsHandler.addWithLabel(Labels.THEME_CHANGED,
             St.ThemeContext.get_for_stage(global.stage), 'changed',
-            () => this.updateCustomTheme());
+            () => this._queueUpdateCustomTheme(),
+            Utils.SignalsHandlerFlags.CONNECT_AFTER);
 
         const maybeUpdateCustomTheme = () => {
             if (this._actor.mapped) {
                 this._signalsHandler.unblockWithLabel(Labels.THEME_CHANGED);
-                this.updateCustomTheme();
+                this._queueUpdateCustomTheme();
             } else {
+                this._dequeueUpdateCustomTheme();
                 this._signalsHandler.blockWithLabel(Labels.THEME_CHANGED);
             }
         };
 
         this._signalsHandler.add(this._actor, 'notify::mapped',
-            () => maybeUpdateCustomTheme());
+            () => maybeUpdateCustomTheme(),
+            Utils.SignalsHandlerFlags.CONNECT_AFTER);
 
         maybeUpdateCustomTheme();
 
@@ -102,7 +105,25 @@ export class ThemeManager {
     destroy() {
         this.emit('destroy');
         this._transparency.destroy();
-        this._destroyed = true;
+        this._dequeueUpdateCustomTheme();
+    }
+
+    _queueUpdateCustomTheme() {
+        if (this._updateLater)
+            return;
+
+        this._updateLater = Utils.laterAdd(Meta.LaterType.BEFORE_REDRAW, () => {
+            this._updateLater = 0;
+            this.updateCustomTheme();
+        });
+    }
+
+    _dequeueUpdateCustomTheme() {
+        if (!this._updateLater)
+            return;
+
+        Utils.laterRemove(this._updateLater);
+        delete this._updateLater;
     }
 
     _onOverviewShowing() {
@@ -241,8 +262,9 @@ export class ThemeManager {
     }
 
     updateCustomTheme() {
-        if (this._destroyed)
-            throw new Error(`Impossible to update a destroyed ${this.constructor.name}`);
+        if (!this._actor.mapped)
+            return;
+
         this._updateCustomStyleClasses();
         this._updateDashOpacity();
         this._updateDashColor();
@@ -491,7 +513,7 @@ class Transparency {
          * */
         let factor = 0;
         if (!Docking.DockManager.settings.dockFixed &&
-            this._dock.getDockState() === Docking.State.HIDDEN)
+            this._dock.dockState === Docking.State.HIDDEN)
             factor = 1;
         const [leftCoord, topCoord] = this._actor.get_transformed_position();
         let threshold;
