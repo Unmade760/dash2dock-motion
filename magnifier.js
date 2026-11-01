@@ -16,6 +16,8 @@
 // sampling noise out of the layout.
 
 import Clutter from 'gi://Clutter';
+import GLib from 'gi://GLib';
+import GObject from 'gi://GObject';
 import Graphene from 'gi://Graphene';
 import St from 'gi://St';
 
@@ -508,7 +510,16 @@ export class DockMagnifier {
             bg.translation_y = translation;
         }
 
-        this._stretchBlurGroup(bgP1, scale, translation);
+        if (!this._blurFollowsSlab(bg))
+            this._stretchBlurGroup(bgP1, scale, translation);
+    }
+
+    // Newer Blur my Shell watches the slab scale and resizes its blur by itself
+    // so stretching its group as well would stretch the blur twice
+    _blurFollowsSlab(bg) {
+        return GObject.signal_has_handler_pending(bg,
+            GObject.signal_lookup('notify', GObject.Object),
+            GLib.quark_from_string('scale-x'), false);
     }
 
     /**
